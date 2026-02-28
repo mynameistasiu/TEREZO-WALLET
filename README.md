@@ -25,18 +25,20 @@ This project contains an expanded scaffold for the Terezo Wallet MVP: backend (E
 
 Frontend expects backend at http://localhost:5000
 
-## Deploy Notes (Important)
+## Deploy Notes (Automatic Frontend -> Backend Proxy)
 
-If login/register works on PC but fails on phone after deploy, your frontend is likely still pointing to localhost.
+This app is configured so deployed frontend can call `/api/*` on the same domain and Netlify forwards it to your backend.
 
 1. Deploy backend to a public host (Render, Railway, VPS, etc.)
-2. Set backend `CORS_ORIGINS` in `backend/.env`:
-   - Example: `CORS_ORIGINS="https://your-app.netlify.app,https://yourdomain.com"`
-3. In Netlify (or your frontend host), set:
-   - `NEXT_PUBLIC_API_BASE=https://your-backend-domain.com`
-4. Redeploy frontend after changing environment variables.
+2. In backend `.env`, set:
+   - `CORS_ORIGINS="https://your-app.netlify.app,https://yourdomain.com"`
+3. In Netlify environment variables, set:
+   - `BACKEND_API_BASE=https://your-backend-domain.com`
+4. Redeploy Netlify site.
 
-You can test backend from phone/browser with:
+No user-side manual API setup is required when this is configured.
+
+You can test backend directly:
 - `https://your-backend-domain.com/health`
 
 ## What was added

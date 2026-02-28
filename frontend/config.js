@@ -11,17 +11,19 @@ const localApiBase = (() => {
   }
 })()
 
+const isBrowser = typeof window !== "undefined"
+const host = isBrowser ? window.location.hostname : ""
+const isLocalHost = host === "localhost" || host === "127.0.0.1"
+
 const inferredApiBase = (() => {
-  if (typeof window === "undefined") return ""
-  const host = window.location.hostname
-  const isLocalHost = host === "localhost" || host === "127.0.0.1"
+  if (!isBrowser) return ""
   // In local dev, default to local backend.
   if (isLocalHost) return "http://localhost:5000"
-  // In deployed environments, don't force localhost.
+  // In deployed environments, use same-origin /api (Netlify proxy).
   return ""
 })()
 
 export const API_BASE = envApiBase || localApiBase || inferredApiBase
-export const IS_API_CONFIGURED = Boolean(API_BASE)
+export const IS_API_CONFIGURED = Boolean(API_BASE) || (isBrowser && !isLocalHost)
 export const MEMBERSHIP_FEE = parseInt(process.env.NEXT_PUBLIC_MEMBERSHIP_FEE) || 10000
 export const WELCOME_BONUS = parseInt(process.env.NEXT_PUBLIC_WELCOME_BONUS) || 64000
