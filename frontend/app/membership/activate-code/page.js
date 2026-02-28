@@ -17,8 +17,9 @@ export default function ActivateCodePage() {
     const stored = localStorage.getItem("user")
     if (!stored) return false
     const user = JSON.parse(stored)
-    user.isMember = true
-    localStorage.setItem("user", JSON.stringify(user))
+    const updated = { ...user, isMember: true }
+    localStorage.setItem("user", JSON.stringify(updated))
+    localStorage.setItem("tw_wallet_activated", "1")
     return true
   }
 
@@ -46,7 +47,10 @@ export default function ActivateCodePage() {
 
       if (response.ok) {
         if (data?.user) {
-          localStorage.setItem("user", JSON.stringify(data.user))
+          const existing = stored ? JSON.parse(stored) : {}
+          const merged = { ...existing, ...data.user, isMember: true }
+          localStorage.setItem("user", JSON.stringify(merged))
+          localStorage.setItem("tw_wallet_activated", "1")
         } else {
           activateLocally()
         }

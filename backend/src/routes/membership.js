@@ -49,7 +49,18 @@ router.post('/redeem', async (req, res) => {
       data: { uses: membership.uses + 1 },
     })
 
-    res.json({ message: 'Membership activated successfully', user: { id: updatedUser.id, isMember: updatedUser.isMember, balance: updatedUser.balance } })
+    res.json({
+      message: 'Membership activated successfully',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+        isMember: updatedUser.isMember,
+        balance: updatedUser.balance,
+        pendingBalance: updatedUser.pendingBalance,
+        welcomeBonusClaimed: updatedUser.welcomeBonusClaimed,
+      },
+    })
   } catch (err) {
     console.error('Membership redeem error:', err)
     res.status(500).json({ error: err.message || 'Server error' })

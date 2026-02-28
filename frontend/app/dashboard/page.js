@@ -59,9 +59,11 @@ export default function Dashboard() {
             ...parsed,
             balance: Math.max(Number(parsed.balance || 0), Number(data.balance ?? 0)),
             pendingBalance: data.pendingBalance ?? parsed.pendingBalance,
+            isMember: Boolean(data.isMember ?? parsed.isMember),
           }
           setUser((prev) => ({ ...prev, ...nextUser }))
           localStorage.setItem("user", JSON.stringify(nextUser))
+          if (nextUser.isMember) localStorage.setItem("tw_wallet_activated", "1")
           setTransactions(data.recentTransactions || [])
         })
         .catch(() => setTransactions([]))

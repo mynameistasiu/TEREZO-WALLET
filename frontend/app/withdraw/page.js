@@ -20,6 +20,7 @@ const parseNairaInput = (value = "") => Number(String(value).replace(/,/g, "")) 
 
 export default function WithdrawPage() {
   const [user, setUser] = useState({ isMember: false, balance: 0, id: null })
+  const [hasActivatedOnce, setHasActivatedOnce] = useState(false)
   const [formData, setFormData] = useState({ bankName: "", accountName: "", accountNumber: "", amount: "" })
   const [loading, setLoading] = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -32,6 +33,8 @@ export default function WithdrawPage() {
     if (!stored) return
 
     const parsed = JSON.parse(stored)
+    const activatedFlag = localStorage.getItem("tw_wallet_activated") === "1"
+    setHasActivatedOnce(activatedFlag || Boolean(parsed.isMember))
     setUser(parsed)
 
     if (parsed.id) {
@@ -42,6 +45,10 @@ export default function WithdrawPage() {
           const synced = { ...parsed, isMember: Boolean(data.isMember), balance: Number(data.balance || 0) }
           setUser((prev) => ({ ...prev, ...synced }))
           localStorage.setItem("user", JSON.stringify(synced))
+          if (synced.isMember) {
+            localStorage.setItem("tw_wallet_activated", "1")
+            setHasActivatedOnce(true)
+          }
         })
         .catch(() => {})
     }
@@ -52,7 +59,7 @@ export default function WithdrawPage() {
     setLoading(true)
     setMessage({ type: "", text: "" })
 
-    if (!user.isMember) {
+    if (!user.isMember && !hasActivatedOnce) {
       setMessage({ type: "error", text: "Wallet is inactive. Activate account before withdrawing." })
       setLoading(false)
       return
@@ -107,7 +114,7 @@ export default function WithdrawPage() {
       <main className={styles.container}>
         <Header />
 
-        {!user.isMember && (
+        {!user.isMember && !hasActivatedOnce && (
           <section className={styles.gatingSection}>
             <div className={styles.gatingCard}>
               <h2 className={styles.gatingTitle}>Wallet Inactive</h2>
@@ -117,7 +124,7 @@ export default function WithdrawPage() {
           </section>
         )}
 
-        {user.isMember && (
+        {(user.isMember || hasActivatedOnce) && (
           <section className={styles.content}>
             <h1 className={styles.title}>Withdraw Funds</h1>
             <p className={styles.subtitle}>Fill your bank details correctly. Approved requests are sent to your account after review.</p>
