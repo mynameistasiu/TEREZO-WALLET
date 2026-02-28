@@ -60,12 +60,6 @@ export default function WithdrawPage() {
     setLoading(true)
     setMessage({ type: "", text: "" })
 
-    if (!user.isMember && !hasActivatedOnce) {
-      setMessage({ type: "error", text: "Wallet is inactive. Activate account before withdrawing." })
-      setLoading(false)
-      return
-    }
-
     const amountValue = parseNairaInput(formData.amount)
 
     if (amountValue > Number(user.balance)) {
@@ -89,18 +83,33 @@ export default function WithdrawPage() {
       ])
       let data = await parseJsonSafe(response)
 
-      // Auto-repair member status in backend for users already activated locally once.
-      if (!response.ok && hasActivatedOnce && getApiErrorMessage(data, "") === "Membership required to withdraw") {
+      // Auto-repair member status in backend and retry withdrawal once.
+      if (!response.ok && getApiErrorMessage(data, "") === "Membership required to withdraw") {
+        let repairedUser = { ...user, isMember: true }
         const repair = await fetch(`${API_BASE}/api/membership/redeem`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code: DEFAULT_ACTIVATION_CODE, userId: user.id }),
         })
-        if (repair.ok) {
+        const repairData = await parseJsonSafe(repair)
+        const repairMessage = getApiErrorMessage(repairData, "")
+        const canProceed = repair.ok || repairMessage === "User already has membership"
+
+        if (canProceed) {
           localStorage.setItem("tw_wallet_activated", "1")
-          const repairedUser = { ...user, isMember: true }
+          setHasActivatedOnce(true)
           setUser(repairedUser)
           localStorage.setItem("user", JSON.stringify(repairedUser))
+        }
+
+        if (canProceed && user.id) {
+          const sync = await fetch(`${API_BASE}/api/user/${user.id}/dashboard`)
+          const syncData = await parseJsonSafe(sync)
+          if (sync.ok && syncData?.id) {
+            const syncedUser = { ...repairedUser, isMember: Boolean(syncData.isMember), balance: Number(syncData.balance ?? repairedUser.balance) }
+            setUser(syncedUser)
+            localStorage.setItem("user", JSON.stringify(syncedUser))
+          }
           response = await submitWithdrawal()
           data = await parseJsonSafe(response)
         }
