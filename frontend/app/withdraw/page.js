@@ -22,11 +22,29 @@ export default function WithdrawPage() {
   const [user, setUser] = useState({ isMember: false, balance: 0, id: null })
   const [formData, setFormData] = useState({ bankName: "", accountName: "", accountNumber: "", amount: "" })
   const [loading, setLoading] = useState(false)
+  const [processing, setProcessing] = useState(false)
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [successText, setSuccessText] = useState("")
   const [message, setMessage] = useState({ type: "", text: "" })
 
   useEffect(() => {
     const stored = localStorage.getItem("user")
-    if (stored) setUser(JSON.parse(stored))
+    if (!stored) return
+
+    const parsed = JSON.parse(stored)
+    setUser(parsed)
+
+    if (parsed.id) {
+      fetch(`${API_BASE}/api/user/${parsed.id}/dashboard`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data || !data.id) return
+          const synced = { ...parsed, isMember: Boolean(data.isMember), balance: Number(data.balance || 0) }
+          setUser((prev) => ({ ...prev, ...synced }))
+          localStorage.setItem("user", JSON.stringify(synced))
+        })
+        .catch(() => {})
+    }
   }, [])
 
   const handleSubmit = async (e) => {
@@ -49,23 +67,37 @@ export default function WithdrawPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/withdraw`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, ...formData, amount: amountValue }),
-      })
+      setProcessing(true)
+      const [response] = await Promise.all([
+        fetch(`${API_BASE}/api/withdraw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id, ...formData, amount: amountValue }),
+        }),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ])
       const data = await parseJsonSafe(response)
 
       if (!response.ok) {
-        setMessage({ type: "error", text: getApiErrorMessage(data, "Error processing withdrawal") })
+        const apiMsg = getApiErrorMessage(data, "Error processing withdrawal")
+        const mapped = apiMsg === "Membership required to withdraw" ? "Wallet is inactive. Activate account before withdrawing." : apiMsg
+        setMessage({ type: "error", text: mapped })
         return
       }
 
+      const nextBalance = Number.isFinite(Number(data.newBalance)) ? Number(data.newBalance) : Math.max(0, Number(user.balance || 0) - amountValue)
+      const updatedUser = { ...user, balance: nextBalance, isMember: data.isMember ?? user.isMember }
+      setUser(updatedUser)
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+
+      setSuccessText(`Your withdrawal of ${formatCurrency(amountValue)} was submitted successfully.`)
+      setShowSuccessPopup(true)
       setMessage({ type: "success", text: "Withdrawal request submitted. Processing window: 24-72 hours." })
       setFormData({ bankName: "", accountName: "", accountNumber: "", amount: "" })
     } catch (error) {
       setMessage({ type: "error", text: getNetworkErrorMessage(error, API_BASE) })
     } finally {
+      setProcessing(false)
       setLoading(false)
     }
   }
@@ -164,11 +196,34 @@ export default function WithdrawPage() {
                 />
               </div>
 
-              <button type="submit" className={styles.btnSubmit} disabled={loading}>{loading ? "Processing..." : "Request Withdrawal"}</button>
+              <button type="submit" className={styles.btnSubmit} disabled={loading || processing}>
+                {loading || processing ? "Processing..." : "Request Withdrawal"}
+              </button>
             </form>
           </section>
         )}
       </main>
+
+      {processing && (
+        <div className={styles.overlay}>
+          <div className={styles.loaderCard}>
+            <span className={styles.loader} />
+            <p>Processing your withdrawal request...</p>
+          </div>
+        </div>
+      )}
+
+      {showSuccessPopup && (
+        <div className={styles.overlay}>
+          <div className={styles.successCard}>
+            <h3>Withdrawal Successful</h3>
+            <p>{successText}</p>
+            <button type="button" className={styles.btnSubmit} onClick={() => setShowSuccessPopup(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <BottomNav />
     </>
   )

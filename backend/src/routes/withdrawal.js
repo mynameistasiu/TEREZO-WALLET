@@ -1,4 +1,4 @@
-const express = require('express')
+﻿const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const router = express.Router()
@@ -7,9 +7,10 @@ const router = express.Router()
 router.post('/', async (req, res) => {
   try {
     const { userId, bankName, accountName, accountNumber, amount, reason } = req.body
+    const amountValue = parseInt(amount, 10)
 
     // Validate input
-    if (!userId || !bankName || !accountName || !accountNumber || !amount) {
+    if (!userId || !bankName || !accountName || !accountNumber || !amountValue) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
@@ -23,13 +24,13 @@ router.post('/', async (req, res) => {
     }
 
     // Check balance
-    if (user.balance < parseInt(amount)) {
+    if (user.balance < amountValue) {
       return res.status(400).json({ error: 'Insufficient balance' })
     }
 
     // Check minimum withdrawal
-    if (parseInt(amount) < 1000) {
-      return res.status(400).json({ error: 'Minimum withdrawal is ₦1,000' })
+    if (amountValue < 1000) {
+      return res.status(400).json({ error: 'Minimum withdrawal is N1,000' })
     }
 
     // Generate unique reference
@@ -39,7 +40,7 @@ router.post('/', async (req, res) => {
     const withdrawal = await prisma.withdrawal.create({
       data: {
         userId: parseInt(userId),
-        amount: parseInt(amount),
+        amount: amountValue,
         bankName,
         accountName,
         accountNumber,
@@ -50,15 +51,17 @@ router.post('/', async (req, res) => {
     })
 
     // Deduct from balance (can be reversed if rejected)
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: parseInt(userId) },
-      data: { balance: user.balance - parseInt(amount) },
+      data: { balance: user.balance - amountValue },
     })
 
     res.json({
       message: 'Withdrawal requested successfully',
       withdrawal,
       reference,
+      newBalance: updatedUser.balance,
+      isMember: updatedUser.isMember,
     })
   } catch (err) {
     console.error(err)
