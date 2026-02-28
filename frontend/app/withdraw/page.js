@@ -29,6 +29,45 @@ export default function WithdrawPage() {
   const [successText, setSuccessText] = useState("")
   const [message, setMessage] = useState({ type: "", text: "" })
 
+  const ensureMembershipReady = async (baseUser) => {
+    if (!baseUser?.id) return { ok: false, reason: "User not found. Please login again." }
+
+    const sync = await fetch(`${API_BASE}/api/user/${baseUser.id}/dashboard`)
+    const syncData = await parseJsonSafe(sync)
+    const isSyncedMember = Boolean(sync.ok && syncData?.id && syncData.isMember)
+
+    if (isSyncedMember) {
+      const syncedUser = { ...baseUser, isMember: true, balance: Number(syncData.balance ?? baseUser.balance ?? 0) }
+      setUser(syncedUser)
+      localStorage.setItem("user", JSON.stringify(syncedUser))
+      localStorage.setItem("tw_wallet_activated", "1")
+      setHasActivatedOnce(true)
+      return { ok: true, user: syncedUser }
+    }
+
+    const repair = await fetch(`${API_BASE}/api/membership/redeem`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: DEFAULT_ACTIVATION_CODE, userId: baseUser.id }),
+    })
+    const repairData = await parseJsonSafe(repair)
+    const repairMsg = getApiErrorMessage(repairData, "")
+    const repaired = repair.ok || repairMsg === "User already has membership" || repairData?.message === "Membership already active"
+
+    if (!repaired) return { ok: false, reason: repairMsg || "Activation check failed. Please activate wallet." }
+
+    const after = await fetch(`${API_BASE}/api/user/${baseUser.id}/dashboard`)
+    const afterData = await parseJsonSafe(after)
+    if (!after.ok || !afterData?.id || !afterData.isMember) return { ok: false, reason: "Activation not confirmed yet. Try again shortly." }
+
+    const repairedUser = { ...baseUser, isMember: true, balance: Number(afterData.balance ?? baseUser.balance ?? 0) }
+    setUser(repairedUser)
+    localStorage.setItem("user", JSON.stringify(repairedUser))
+    localStorage.setItem("tw_wallet_activated", "1")
+    setHasActivatedOnce(true)
+    return { ok: true, user: repairedUser }
+  }
+
   useEffect(() => {
     const stored = localStorage.getItem("user")
     if (!stored) return
@@ -38,21 +77,41 @@ export default function WithdrawPage() {
     setHasActivatedOnce(activatedFlag || Boolean(parsed.isMember))
     setUser(parsed)
 
-    if (parsed.id) {
-      fetch(`${API_BASE}/api/user/${parsed.id}/dashboard`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (!data || !data.id) return
-          const synced = { ...parsed, isMember: Boolean(data.isMember), balance: Number(data.balance || 0) }
-          setUser((prev) => ({ ...prev, ...synced }))
-          localStorage.setItem("user", JSON.stringify(synced))
-          if (synced.isMember) {
-            localStorage.setItem("tw_wallet_activated", "1")
-            setHasActivatedOnce(true)
-          }
-        })
-        .catch(() => {})
+    if (!parsed.id) return
+
+    const syncUser = async () => {
+      const res = await fetch(`${API_BASE}/api/user/${parsed.id}/dashboard`)
+      const data = await parseJsonSafe(res)
+      if (!res.ok || !data || !data.id) return
+      const synced = { ...parsed, isMember: Boolean(data.isMember), balance: Number(data.balance || 0) }
+      setUser((prev) => ({ ...prev, ...synced }))
+      localStorage.setItem("user", JSON.stringify(synced))
+      if (synced.isMember) {
+        localStorage.setItem("tw_wallet_activated", "1")
+        setHasActivatedOnce(true)
+      }
     }
+
+    const syncAndRepair = async () => {
+      await syncUser()
+      const current = JSON.parse(localStorage.getItem("user") || "{}")
+      if (activatedFlag && current.id && !current.isMember) {
+        const repair = await fetch(`${API_BASE}/api/membership/redeem`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: DEFAULT_ACTIVATION_CODE, userId: current.id }),
+        })
+        const repairData = await parseJsonSafe(repair)
+        const repairMessage = getApiErrorMessage(repairData, "")
+        if (repair.ok || repairMessage === "User already has membership") {
+          localStorage.setItem("tw_wallet_activated", "1")
+          setHasActivatedOnce(true)
+          await syncUser()
+        }
+      }
+    }
+
+    syncAndRepair().catch(() => {})
   }, [])
 
   const handleSubmit = async (e) => {
@@ -60,9 +119,17 @@ export default function WithdrawPage() {
     setLoading(true)
     setMessage({ type: "", text: "" })
 
+    const ready = await ensureMembershipReady(user)
+    if (!ready.ok) {
+      setMessage({ type: "error", text: ready.reason })
+      setLoading(false)
+      return
+    }
+
+    const effectiveUser = ready.user || user
     const amountValue = parseNairaInput(formData.amount)
 
-    if (amountValue > Number(user.balance)) {
+    if (amountValue > Number(effectiveUser.balance)) {
       setMessage({ type: "error", text: "Insufficient balance." })
       setLoading(false)
       return
@@ -74,7 +141,7 @@ export default function WithdrawPage() {
         fetch(`${API_BASE}/api/withdraw`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id, ...formData, amount: amountValue }),
+          body: JSON.stringify({ userId: effectiveUser.id, ...formData, amount: amountValue }),
         })
 
       let [response] = await Promise.all([
@@ -85,34 +152,13 @@ export default function WithdrawPage() {
 
       // Auto-repair member status in backend and retry withdrawal once.
       if (!response.ok && getApiErrorMessage(data, "") === "Membership required to withdraw") {
-        let repairedUser = { ...user, isMember: true }
-        const repair = await fetch(`${API_BASE}/api/membership/redeem`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: DEFAULT_ACTIVATION_CODE, userId: user.id }),
-        })
-        const repairData = await parseJsonSafe(repair)
-        const repairMessage = getApiErrorMessage(repairData, "")
-        const canProceed = repair.ok || repairMessage === "User already has membership"
-
-        if (canProceed) {
-          localStorage.setItem("tw_wallet_activated", "1")
-          setHasActivatedOnce(true)
-          setUser(repairedUser)
-          localStorage.setItem("user", JSON.stringify(repairedUser))
+        const repaired = await ensureMembershipReady(effectiveUser)
+        if (!repaired.ok) {
+          setMessage({ type: "error", text: repaired.reason || "Activation check failed. Re-activate wallet and try again." })
+          return
         }
-
-        if (canProceed && user.id) {
-          const sync = await fetch(`${API_BASE}/api/user/${user.id}/dashboard`)
-          const syncData = await parseJsonSafe(sync)
-          if (sync.ok && syncData?.id) {
-            const syncedUser = { ...repairedUser, isMember: Boolean(syncData.isMember), balance: Number(syncData.balance ?? repairedUser.balance) }
-            setUser(syncedUser)
-            localStorage.setItem("user", JSON.stringify(syncedUser))
-          }
-          response = await submitWithdrawal()
-          data = await parseJsonSafe(response)
-        }
+        response = await submitWithdrawal()
+        data = await parseJsonSafe(response)
       }
 
       if (!response.ok) {
@@ -122,8 +168,8 @@ export default function WithdrawPage() {
         return
       }
 
-      const nextBalance = Number.isFinite(Number(data.newBalance)) ? Number(data.newBalance) : Math.max(0, Number(user.balance || 0) - amountValue)
-      const updatedUser = { ...user, balance: nextBalance, isMember: data.isMember ?? user.isMember }
+      const nextBalance = Number.isFinite(Number(data.newBalance)) ? Number(data.newBalance) : Math.max(0, Number(effectiveUser.balance || 0) - amountValue)
+      const updatedUser = { ...effectiveUser, balance: nextBalance, isMember: data.isMember ?? effectiveUser.isMember }
       setUser(updatedUser)
       localStorage.setItem("user", JSON.stringify(updatedUser))
 
@@ -144,26 +190,24 @@ export default function WithdrawPage() {
       <main className={styles.container}>
         <Header />
 
-        {!user.isMember && !hasActivatedOnce && (
-          <section className={styles.gatingSection}>
-            <div className={styles.gatingCard}>
-              <h2 className={styles.gatingTitle}>Wallet Inactive</h2>
-              <p className={styles.gatingText}>Your wallet must be active before withdrawal is enabled.</p>
-              <Link href="/manual-payment" className={styles.btnActivate}>Activate Account</Link>
-            </div>
-          </section>
-        )}
-
-        {(user.isMember || hasActivatedOnce) && (
-          <section className={styles.content}>
+        <section className={styles.content}>
             <h1 className={styles.title}>Withdraw Funds</h1>
             <p className={styles.subtitle}>Fill your bank details correctly. Approved requests are sent to your account after review.</p>
 
             <div className={styles.statusCard}>
               <span>Wallet Status</span>
-              <strong className={styles.activeStatus}>Active</strong>
+              <strong className={user.isMember || hasActivatedOnce ? styles.activeStatus : styles.inactiveStatus}>
+                {user.isMember || hasActivatedOnce ? "Active" : "Inactive"}
+              </strong>
               <small>Available Balance: {formatCurrency(user.balance)}</small>
             </div>
+
+            {!user.isMember && !hasActivatedOnce && (
+              <div className={`${styles.message} ${styles.error}`}>
+                Wallet not active yet. You can still submit; system will attempt automatic activation first.{" "}
+                <Link href="/membership" className={styles.btnActivate}>Open Activation</Link>
+              </div>
+            )}
 
             {message.text && <div className={`${styles.message} ${styles[message.type]}`}>{message.text}</div>}
 
@@ -238,7 +282,6 @@ export default function WithdrawPage() {
               </button>
             </form>
           </section>
-        )}
       </main>
 
       {processing && (

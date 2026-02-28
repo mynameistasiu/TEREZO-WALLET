@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation"
 import Header from "../../components/Header"
 import BottomNav from "../../components/BottomNav"
 import styles from "./profile.module.css"
+import { API_BASE } from "../../config"
+import { parseJsonSafe } from "../../lib/apiError"
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount)
@@ -20,7 +22,20 @@ export default function ProfilePage() {
       return
     }
     try {
-      setUser(JSON.parse(stored))
+      const parsed = JSON.parse(stored)
+      setUser(parsed)
+      if (parsed.id) {
+        fetch(`${API_BASE}/api/user/${parsed.id}/dashboard`)
+          .then(parseJsonSafe)
+          .then((data) => {
+            if (!data || !data.id) return
+            const merged = { ...parsed, isMember: Boolean(data.isMember), balance: Number(data.balance ?? parsed.balance ?? 0) }
+            setUser((prev) => ({ ...prev, ...merged }))
+            localStorage.setItem("user", JSON.stringify(merged))
+            if (merged.isMember) localStorage.setItem("tw_wallet_activated", "1")
+          })
+          .catch(() => {})
+      }
     } catch {
       router.replace("/auth/login")
     }

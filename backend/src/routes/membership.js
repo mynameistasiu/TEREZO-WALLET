@@ -20,8 +20,11 @@ router.post('/redeem', async (req, res) => {
     const isDefaultCode = normalizedCode.toUpperCase() === DEFAULT_ACTIVATION_CODE
 
     if (!isDefaultCode) {
-      // Find membership code (case-insensitive)
-      membership = await prisma.membershipCode.findFirst({ where: { code: { equals: normalizedCode, mode: 'insensitive' } } })
+      // Prisma/SQLite compatibility: do normalized lookups without `mode: "insensitive"`.
+      membership =
+        (await prisma.membershipCode.findUnique({ where: { code: normalizedCode } })) ||
+        (await prisma.membershipCode.findUnique({ where: { code: normalizedCode.toUpperCase() } })) ||
+        (await prisma.membershipCode.findUnique({ where: { code: normalizedCode.toLowerCase() } }))
 
       if (!membership || !membership.isActive) {
         return res.status(400).json({ errors: { code: 'Invalid activation code' } })
@@ -40,7 +43,18 @@ router.post('/redeem', async (req, res) => {
     }
 
     if (user.isMember) {
-      return res.status(400).json({ errors: { user: 'User already has membership' } })
+      return res.json({
+        message: 'Membership already active',
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          isMember: user.isMember,
+          balance: user.balance,
+          pendingBalance: user.pendingBalance,
+          welcomeBonusClaimed: user.welcomeBonusClaimed,
+        },
+      })
     }
 
     // Update user membership status and return updated user

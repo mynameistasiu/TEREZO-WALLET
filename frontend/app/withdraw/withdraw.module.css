@@ -1,6 +1,9 @@
 .container {
   min-height: 100vh;
-  background: var(--color-bg);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(11, 37, 69, 0.1), transparent 30%),
+    radial-gradient(circle at 8% 5%, rgba(198, 159, 58, 0.14), transparent 28%),
+    var(--color-bg);
   padding-bottom: 80px;
 }
 
@@ -19,6 +22,7 @@
   text-align: center;
   max-width: 420px;
   box-shadow: var(--shadow-lg);
+  animation: riseIn 0.5s ease;
 }
 
 .gatingTitle {
@@ -50,6 +54,7 @@
   max-width: 640px;
   margin: 0 auto;
   padding: var(--space-4);
+  animation: riseIn 0.5s ease;
 }
 
 .title {
@@ -74,10 +79,15 @@
   display: grid;
   gap: 4px;
   margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
 .activeStatus {
   color: #14b866;
+}
+
+.inactiveStatus {
+  color: #e02424;
 }
 
 .message {
@@ -104,6 +114,12 @@
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-5);
+  transition: transform 0.2s ease, box-shadow 0.22s ease;
+}
+
+.form:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .formGroup {
@@ -125,6 +141,14 @@
   border: 1px solid rgba(11, 37, 69, 0.2);
   border-radius: 8px;
   font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: rgba(11, 37, 69, 0.36);
+  box-shadow: 0 0 0 4px rgba(11, 37, 69, 0.08);
 }
 
 .textarea {
@@ -237,5 +261,16 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

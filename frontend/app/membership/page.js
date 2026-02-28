@@ -1,10 +1,37 @@
 "use client"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Header from "../../components/Header"
 import BottomNav from "../../components/BottomNav"
 import styles from "./membership.module.css"
+import { API_BASE } from "../../config"
+import { parseJsonSafe } from "../../lib/apiError"
 
 export default function MembershipPage() {
+  const [isMember, setIsMember] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user")
+    if (!stored) return
+    try {
+      const parsed = JSON.parse(stored)
+      setIsMember(Boolean(parsed.isMember || localStorage.getItem("tw_wallet_activated") === "1"))
+      if (parsed.id) {
+        fetch(`${API_BASE}/api/user/${parsed.id}/dashboard`)
+          .then(parseJsonSafe)
+          .then((data) => {
+            if (!data || !data.id) return
+            const active = Boolean(data.isMember)
+            setIsMember(active)
+            const merged = { ...parsed, isMember: active, balance: Number(data.balance ?? parsed.balance ?? 0) }
+            localStorage.setItem("user", JSON.stringify(merged))
+            if (active) localStorage.setItem("tw_wallet_activated", "1")
+          })
+          .catch(() => {})
+      }
+    } catch {}
+  }, [])
+
   return (
     <>
       <main className={styles.container}>
@@ -13,6 +40,14 @@ export default function MembershipPage() {
         <section className={styles.content}>
           <h1 className={styles.title}>Activation Center</h1>
           <p className={styles.subtitle}>Complete activation in two clear steps: purchase your code, then activate your wallet.</p>
+
+          {isMember && (
+            <section className={styles.noteCard}>
+              <h4>Membership Active</h4>
+              <p>Your wallet is already activated. You can now continue to withdrawal and other premium features.</p>
+              <Link href="/withdraw" className={styles.stepBtn} style={{ marginTop: 10 }}>Go To Withdraw</Link>
+            </section>
+          )}
 
           <div className={styles.stepsGrid}>
             <article className={styles.stepCard}>

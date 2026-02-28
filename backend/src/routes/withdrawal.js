@@ -33,35 +33,62 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Minimum withdrawal is N1,000' })
     }
 
-    // Generate unique reference
+    // Ensure a fund exists for transaction logging
+    let fund = await prisma.fund.findFirst({ orderBy: { id: 'asc' }, select: { id: true } })
+    if (!fund) {
+      try {
+        fund = await prisma.fund.create({
+          data: { name: 'Wallet Fund', code: 'WALLET' },
+          select: { id: true },
+        })
+      } catch {
+        fund = await prisma.fund.findFirst({ orderBy: { id: 'asc' }, select: { id: true } })
+      }
+    }
+
     const reference = `WD-${Date.now()}-${userId}`
 
-    // Create withdrawal request
-    const withdrawal = await prisma.withdrawal.create({
-      data: {
-        userId: parseInt(userId),
-        amount: amountValue,
-        bankName,
-        accountName,
-        accountNumber,
-        reason: reason || '',
-        reference,
-        status: 'pending', // Admin must approve
-      },
-    })
+    // Atomic write: withdrawal + balance deduction + transaction log
+    const result = await prisma.$transaction(async (tx) => {
+      const withdrawal = await tx.withdrawal.create({
+        data: {
+          userId: parseInt(userId),
+          amount: amountValue,
+          bankName,
+          accountName,
+          accountNumber,
+          reason: reason || '',
+          reference,
+          status: 'pending', // Admin must approve
+        },
+      })
 
-    // Deduct from balance (can be reversed if rejected)
-    const updatedUser = await prisma.user.update({
-      where: { id: parseInt(userId) },
-      data: { balance: user.balance - amountValue },
+      const updatedUser = await tx.user.update({
+        where: { id: parseInt(userId) },
+        data: { balance: user.balance - amountValue },
+      })
+
+      if (fund?.id) {
+        await tx.transaction.create({
+          data: {
+            userId: parseInt(userId),
+            fundId: fund.id,
+            type: 'WITHDRAWAL',
+            amount: -amountValue,
+            meta: `Withdrawal request ${reference}`,
+          },
+        })
+      }
+
+      return { withdrawal, updatedUser }
     })
 
     res.json({
       message: 'Withdrawal requested successfully',
-      withdrawal,
+      withdrawal: result.withdrawal,
       reference,
-      newBalance: updatedUser.balance,
-      isMember: updatedUser.isMember,
+      newBalance: result.updatedUser.balance,
+      isMember: result.updatedUser.isMember,
     })
   } catch (err) {
     console.error(err)

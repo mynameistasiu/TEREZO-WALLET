@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -19,6 +19,16 @@ const readTaskState = () => {
     return JSON.parse(raw)
   } catch {
     return {}
+  }
+}
+const readLocalTransactions = () => {
+  try {
+    const raw = localStorage.getItem("tw_local_transactions")
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
   }
 }
 
@@ -66,7 +76,12 @@ export default function Dashboard() {
           setUser((prev) => ({ ...prev, ...nextUser }))
           localStorage.setItem("user", JSON.stringify(nextUser))
           if (nextUser.isMember) localStorage.setItem("tw_wallet_activated", "1")
-          setTransactions(data.recentTransactions || [])
+          const backendTx = Array.isArray(data.recentTransactions) ? data.recentTransactions : []
+          const localTx = readLocalTransactions()
+          const mergedTx = [...backendTx, ...localTx]
+            .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
+            .slice(0, 20)
+          setTransactions(mergedTx)
         })
         .catch(() => setTransactions([]))
     }
@@ -148,8 +163,7 @@ export default function Dashboard() {
     }
   }, [availableBalance, user])
 
-  const monthlyTarget = 150000
-  const targetPercent = Math.min(100, Math.round((availableBalance / monthlyTarget) * 100))
+  const targetPercent = Math.min(100, Math.round((availableBalance / 150000) * 100))
 
   return (
     <>
@@ -166,103 +180,100 @@ export default function Dashboard() {
         />
 
         <section className={styles.topBar}>
-          <button type="button" className={styles.menuBtn}>☰</button>
-          <h1 className={styles.brand}>Terezo <span>Wallet</span></h1>
+          <div>
+            <h1 className={styles.pageTitle}>Wallet Control Center</h1>
+            <p className={styles.pageSub}>Track growth, complete milestones, and manage your wallet securely.</p>
+          </div>
           <div className={styles.utilityActions}>
-            <Link href="/notifications" className={styles.utilityBtn}>🔔</Link>
-            <Link href="/profile" className={styles.utilityBtn}>👤</Link>
-            <button type="button" className={styles.utilityBtn} onClick={handleLogout}>⎋</button>
+            <Link href="/profile" className={styles.utilityBtn}>Profile</Link>
+            <Link href="/notifications" className={styles.utilityBtn}>Alerts</Link>
+            <button type="button" className={styles.utilityBtn} onClick={handleLogout}>Logout</button>
           </div>
         </section>
 
         <section className={styles.heroCard}>
           <div className={styles.heroLeft}>
-            <p className={styles.greet}>Hello, {user.firstName || "User"} 👋</p>
-            <p className={styles.balanceLabel}>Total Balance</p>
-            <h2 className={styles.balanceValue}>{formatCurrency(availableBalance)}</h2>
             <span className={`${styles.statusChip} ${user.isMember ? styles.active : styles.inactive}`}>
               Wallet {user.isMember ? "Active" : "Inactive"}
             </span>
+            <p className={styles.balanceLabel}>Available Balance</p>
+            <h2 className={styles.balanceValue}>{formatCurrency(availableBalance)}</h2>
+
+            <div className={styles.metricRow}>
+              <div className={styles.metricCard}>
+                <span>Pending</span>
+                <strong>{formatCurrency(user.pendingBalance)}</strong>
+              </div>
+              <div className={styles.metricCard}>
+                <span>Task Earnings</span>
+                <strong>{formatCurrency(taskEarned)}</strong>
+              </div>
+              <div className={styles.metricCard}>
+                <span>Milestones</span>
+                <strong>{completedSteps}/4</strong>
+              </div>
+            </div>
 
             <div className={styles.actionRow}>
               <Link href="/membership" className={styles.actionPrimary}>Activate Account</Link>
               <Link href="/withdraw" className={`${styles.actionSecondary} ${styles.actionWithdraw}`}>Withdraw</Link>
-              <Link href="/tasks" className={styles.actionSecondary}>Tasks</Link>
+              <Link href="/tasks" className={styles.actionSecondary}>Open Tasks</Link>
             </div>
           </div>
 
           <div className={styles.heroRight}>
-            <div className={styles.progressOrb}>
+            <div className={styles.progressCard}>
               <svg viewBox="0 0 160 160" className={styles.progressRing}>
-                <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="9" />
-                <circle cx="80" cy="80" r="72" fill="none" stroke="url(#goldGrad)" strokeWidth="9" strokeDasharray={`${dash} ${circumference}`} strokeLinecap="round" transform="rotate(-90 80 80)" />
+                <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="8" />
+                <circle cx="80" cy="80" r="72" fill="none" stroke="url(#goldGrad)" strokeWidth="8" strokeDasharray={`${dash} ${circumference}`} strokeLinecap="round" transform="rotate(-90 80 80)" />
                 <defs>
                   <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#C69F3A" />
                     <stop offset="100%" stopColor="#FFD66B" />
                   </linearGradient>
                 </defs>
-                <text x="80" y="77" textAnchor="middle" fill="#fff" fontSize="28" fontWeight="800">{progress}%</text>
-                <text x="80" y="98" textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="12">Progress</text>
+                <text x="80" y="85" textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700">{progress}%</text>
               </svg>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.fundsSection}>
-          <div className={styles.sectionHead}>
-            <h3>Your Funds</h3>
-            <span>View All</span>
-          </div>
-          <div className={styles.fundsGrid}>
-            <article className={styles.fundCard}><small>Task Fund</small><strong>{formatCurrency(taskEarned)}</strong></article>
-            <article className={styles.fundCard}><small>Pending</small><strong>{formatCurrency(user.pendingBalance)}</strong></article>
-            <article className={styles.fundCard}><small>Bonus</small><strong>{formatCurrency(user.welcomeBonusClaimed ? 64000 : 0)}</strong></article>
-            <article className={styles.fundCard}><small>Balance</small><strong>{formatCurrency(availableBalance)}</strong></article>
-          </div>
-        </section>
-
-        <section className={styles.trackerSection}>
-          <h3>Progress Tracker</h3>
-          <div className={styles.trackerBar}>
-            <div className={styles.trackerFill} style={{ width: `${progress}%` }} />
-            {steps.map((step) => (
-              <div key={step.label} className={styles.stepNode}>
-                <span className={step.done ? styles.dotDone : styles.dotTodo}>{step.done ? "✓" : "🔒"}</span>
-                <small>{step.label}</small>
+              <div className={styles.stepList}>
+                {steps.map((step) => (
+                  <div key={step.label} className={styles.stepItem}>
+                    <span className={step.done ? styles.dotDone : styles.dotTodo} />
+                    <small>{step.label}</small>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.activationStrip}>
-          <div>
-            <h4>{user.isMember ? "Membership Active" : "Activate Membership"}</h4>
-            <p>{user.isMember ? "Wallet unlocked for withdrawals and full features." : "Unlock withdrawal + more features."}</p>
-          </div>
-          <Link href={user.isMember ? "/withdraw" : "/membership"} className={styles.activationBtn}>
-            {user.isMember ? "Withdraw" : "Enter Code"}
-          </Link>
-        </section>
-
-        <section className={styles.dailyTasks}>
-          <div className={styles.sectionHead}>
-            <h3>Daily Tasks</h3>
-            <Link href="/tasks">View All</Link>
-          </div>
-          <article className={styles.taskItem}>
-            <div>
-              <strong>Complete Social Task Milestones</strong>
-              <p>Reward: {formatCurrency(taskEarned)} earned</p>
             </div>
-            <Link href="/tasks" className={styles.taskStart}>Start</Link>
+          </div>
+        </section>
+
+        <section className={styles.grid}>
+          <article className={styles.card}>
+            <h3>Performance</h3>
+            <div className={styles.statGrid}>
+              <div><span>Progress</span><strong>{targetPercent}%</strong></div>
+              <div><span>Task Earned</span><strong>{formatCurrency(taskEarned)}</strong></div>
+              <div><span>Total Balance</span><strong>{formatCurrency(user.balance)}</strong></div>
+              <div><span>Claimed Rewards</span><strong>{formatCurrency(rewardTotal)}</strong></div>
+            </div>
+            <div className={styles.targetTrack}><div className={styles.targetFill} style={{ width: `${targetPercent}%` }} /></div>
           </article>
-          <article className={styles.taskItem}>
-            <div>
-              <strong>Monthly Performance Target</strong>
-              <p>{targetPercent}% of {formatCurrency(monthlyTarget)} target</p>
-            </div>
-            <Link href="/tasks" className={styles.taskStart}>Open</Link>
+
+          <article className={styles.card}>
+            <h3>Next Recommended Step</h3>
+            {!user.isMember && <p>Activate account to unlock full withdrawal features and complete wallet setup.</p>}
+            {user.isMember && !finalDone && <p>Finish all task milestones to maximize your available earnings.</p>}
+            {user.isMember && finalDone && <p>Great progress. Your wallet is fully configured for earning and withdrawals.</p>}
+            <Link href={!user.isMember ? "/membership" : "/tasks"} className={styles.linkBtn}>Continue</Link>
+          </article>
+
+          <article className={styles.card}>
+            <h3>Security Status</h3>
+            <ul className={styles.securityList}>
+              <li>Session active on this device</li>
+              <li>Wallet state: {user.isMember ? "Verified Active" : "Inactive Pending Activation"}</li>
+              <li>Use official channels for activation/payment proofs</li>
+            </ul>
+            <Link href="/profile" className={styles.linkBtn}>Manage Profile & Security</Link>
           </article>
         </section>
 
@@ -273,9 +284,11 @@ export default function Dashboard() {
             <div key={tx.id} className={styles.txRow}>
               <div>
                 <strong>{tx.type || "Transaction"}</strong>
-                <small>{new Date(tx.date || Date.now()).toLocaleString()}</small>
+                <small>{new Date(tx.createdAt || tx.date || Date.now()).toLocaleString()}</small>
               </div>
-              <strong>{formatCurrency(tx.amount || 0)}</strong>
+              <strong className={Number(tx.amount || 0) >= 0 ? styles.txCredit : styles.txDebit}>
+                {Number(tx.amount || 0) >= 0 ? "+" : "-"}{formatCurrency(Math.abs(Number(tx.amount || 0)))}
+              </strong>
             </div>
           ))}
         </section>
@@ -285,3 +298,4 @@ export default function Dashboard() {
     </>
   )
 }
+

@@ -45,7 +45,10 @@ export default function ActivateCodePage() {
       })
       const data = await parseJsonSafe(response)
 
-      if (response.ok) {
+      const apiMessage = getApiErrorMessage(data, "")
+      const alreadyActive = apiMessage === "User already has membership" || data?.message === "Membership already active"
+
+      if (response.ok || alreadyActive) {
         if (data?.user) {
           const existing = stored ? JSON.parse(stored) : {}
           const merged = { ...existing, ...data.user, isMember: true }
@@ -58,23 +61,11 @@ export default function ActivateCodePage() {
         setTimeout(() => {
           window.location.href = "/dashboard"
         }, 1200)
-      } else if (entered === DEFAULT_CODE && activateLocally()) {
-        setMessage({ type: "success", text: "Wallet activated with default code. Redirecting..." })
-        setTimeout(() => {
-          window.location.href = "/dashboard"
-        }, 1200)
       } else {
         setMessage({ type: "error", text: getApiErrorMessage(data, "Invalid activation code") })
       }
     } catch (err) {
-      if (entered === DEFAULT_CODE && activateLocally()) {
-        setMessage({ type: "success", text: "Wallet activated with default code. Redirecting..." })
-        setTimeout(() => {
-          window.location.href = "/dashboard"
-        }, 1200)
-      } else {
-        setMessage({ type: "error", text: getNetworkErrorMessage(err, API_BASE) })
-      }
+      setMessage({ type: "error", text: getNetworkErrorMessage(err, API_BASE) })
     } finally {
       setLoading(false)
     }

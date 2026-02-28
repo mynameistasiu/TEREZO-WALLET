@@ -52,13 +52,41 @@ router.post('/claim-welcome', async (req, res) => {
       return res.status(400).json({ error: 'Bonus already claimed' })
     }
 
-    // Add welcome bonus
-    const updated = await prisma.user.update({
-      where: { id: parseInt(userId) },
-      data: {
-        balance: user.balance + 64000,
-        welcomeBonusClaimed: true,
-      },
+    // Ensure a fund exists for transaction logging
+    let fund = await prisma.fund.findFirst({ orderBy: { id: 'asc' }, select: { id: true } })
+    if (!fund) {
+      try {
+        fund = await prisma.fund.create({
+          data: { name: 'Wallet Fund', code: 'WALLET' },
+          select: { id: true },
+        })
+      } catch {
+        fund = await prisma.fund.findFirst({ orderBy: { id: 'asc' }, select: { id: true } })
+      }
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const next = await tx.user.update({
+        where: { id: parseInt(userId) },
+        data: {
+          balance: user.balance + 64000,
+          welcomeBonusClaimed: true,
+        },
+      })
+
+      if (fund?.id) {
+        await tx.transaction.create({
+          data: {
+            userId: parseInt(userId),
+            fundId: fund.id,
+            type: 'WELCOME_BONUS',
+            amount: 64000,
+            meta: 'Welcome bonus credited',
+          },
+        })
+      }
+
+      return next
     })
 
     res.json({

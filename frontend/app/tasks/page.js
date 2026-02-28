@@ -5,6 +5,7 @@ import BottomNav from "../../components/BottomNav"
 import styles from "./tasks.module.css"
 
 const STORAGE_KEY = "tw_task_state"
+const TX_STORAGE_KEY = "tw_local_transactions"
 
 const TASKS = [
   {
@@ -87,7 +88,17 @@ export default function Tasks() {
         rewardsClaimed: { ...paidMap, [taskId]: true },
       }
 
+      const existingTx = JSON.parse(localStorage.getItem(TX_STORAGE_KEY) || "[]")
+      const tx = {
+        id: `local-task-${taskId}-${Date.now()}`,
+        type: "TASK_REWARD",
+        amount: reward,
+        createdAt: new Date().toISOString(),
+        meta: taskId,
+      }
+
       localStorage.setItem("user", JSON.stringify(updatedUser))
+      localStorage.setItem(TX_STORAGE_KEY, JSON.stringify([tx, ...existingTx].slice(0, 40)))
       persistTaskState(nextState)
       setFeedback({ type: "success", text: `${formatCurrency(reward)} added to your Available Balance.` })
     } catch {

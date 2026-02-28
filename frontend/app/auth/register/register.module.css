@@ -4,7 +4,10 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: radial-gradient(circle at 100% 0%, rgba(198, 159, 58, 0.24), transparent 40%), linear-gradient(145deg, #0b2545, #102f54);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(198, 159, 58, 0.24), transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(11, 37, 69, 0.25), transparent 35%),
+    linear-gradient(145deg, #0b2545, #102f54);
 }
 
 .wrapper {
@@ -15,12 +18,26 @@
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(5, 18, 35, 0.35);
+  animation: authIn 0.55s ease;
 }
 
 .sidePanel {
   padding: 32px;
   background: linear-gradient(180deg, #0c294a, #0b2545);
   color: #f8fafc;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidePanel::after {
+  content: "";
+  position: absolute;
+  left: -120px;
+  top: -140px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 107, 0.2), transparent 65%);
 }
 
 .sidePanel h2 {
@@ -56,6 +73,7 @@
 
 .formPanel {
   padding: 30px;
+  background: linear-gradient(180deg, #ffffff, #fbfcff);
 }
 
 .title {
@@ -114,6 +132,7 @@
   border-radius: 10px;
   padding: 11px 12px;
   font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input:focus {
@@ -242,6 +261,13 @@
   color: #0b2545;
   background: linear-gradient(135deg, #c69f3a, #ffd66b);
   cursor: pointer;
+  box-shadow: 0 10px 22px rgba(198, 159, 58, 0.25);
+  transition: transform 0.18s ease, box-shadow 0.22s ease;
+}
+
+.btnSubmit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(198, 159, 58, 0.32);
 }
 
 .btnSubmit:disabled {
@@ -253,6 +279,17 @@
   margin-top: 16px;
   font-size: 13px;
   color: var(--color-muted);
+}
+
+@keyframes authIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 920px) {
