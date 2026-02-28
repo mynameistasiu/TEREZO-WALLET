@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "", rememberMe: false })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [apiBaseInput, setApiBaseInput] = useState("")
   const [message, setMessage] = useState({ type: "", text: "" })
   const router = useRouter()
 
@@ -69,6 +70,16 @@ export default function LoginPage() {
     }
   }
 
+  const saveApiBase = () => {
+    const normalized = apiBaseInput.trim().replace(/\/+$/, "")
+    if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+      setMessage({ type: "error", text: "Enter a valid backend URL starting with http:// or https://" })
+      return
+    }
+    localStorage.setItem("tw_api_base", normalized)
+    window.location.reload()
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.wrapper}>
@@ -88,6 +99,22 @@ export default function LoginPage() {
           <p className={styles.subtitle}>Login to continue your Terezo Wallet progress</p>
 
           {message.text && <div className={`${styles.message} ${styles[message.type]}`}>{message.text}</div>}
+
+          {!IS_API_CONFIGURED && (
+            <div className={`${styles.message} ${styles.error}`}>
+              <div style={{ marginBottom: 8 }}>Backend API not configured on this device.</div>
+              <input
+                type="url"
+                placeholder="https://your-backend-domain.com"
+                className={styles.input}
+                value={apiBaseInput}
+                onChange={(e) => setApiBaseInput(e.target.value)}
+              />
+              <button type="button" className={styles.btnSubmit} style={{ marginTop: 10 }} onClick={saveApiBase}>
+                Save Backend URL
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
