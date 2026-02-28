@@ -167,6 +167,41 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+.actionWithdraw {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1f66c9 0%, #00a2ff 50%, #12b7ff 100%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 10px 22px rgba(0, 162, 255, 0.32);
+  transition: transform 0.18s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.actionWithdraw::before {
+  content: "";
+  position: absolute;
+  top: -55%;
+  left: -30%;
+  width: 36%;
+  height: 210%;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.06));
+  transform: rotate(18deg);
+  transition: left 0.45s ease;
+}
+
+.actionWithdraw:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 162, 255, 0.36);
+  filter: saturate(1.1);
+}
+
+.actionWithdraw:hover::before {
+  left: 106%;
+}
+
+.actionWithdraw:active {
+  transform: translateY(0);
+}
+
 .progressCard {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);

@@ -202,7 +202,7 @@ export default function Dashboard() {
 
             <div className={styles.actionRow}>
               <Link href="/membership" className={styles.actionPrimary}>Activate Account</Link>
-              <Link href="/withdraw" className={styles.actionSecondary}>Withdraw</Link>
+              <Link href="/withdraw" className={`${styles.actionSecondary} ${styles.actionWithdraw}`}>Withdraw</Link>
               <Link href="/tasks" className={styles.actionSecondary}>Open Tasks</Link>
             </div>
           </div>
