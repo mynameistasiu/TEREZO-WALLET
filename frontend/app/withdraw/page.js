@@ -17,6 +17,7 @@ const formatNairaInput = (value = "") => {
 }
 
 const parseNairaInput = (value = "") => Number(String(value).replace(/,/g, "")) || 0
+const DEFAULT_ACTIVATION_CODE = "GLS07032256"
 
 export default function WithdrawPage() {
   const [user, setUser] = useState({ isMember: false, balance: 0, id: null })
@@ -75,15 +76,35 @@ export default function WithdrawPage() {
 
     try {
       setProcessing(true)
-      const [response] = await Promise.all([
+      const submitWithdrawal = () =>
         fetch(`${API_BASE}/api/withdraw`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user.id, ...formData, amount: amountValue }),
-        }),
+        })
+
+      let [response] = await Promise.all([
+        submitWithdrawal(),
         new Promise((resolve) => setTimeout(resolve, 3000)),
       ])
-      const data = await parseJsonSafe(response)
+      let data = await parseJsonSafe(response)
+
+      // Auto-repair member status in backend for users already activated locally once.
+      if (!response.ok && hasActivatedOnce && getApiErrorMessage(data, "") === "Membership required to withdraw") {
+        const repair = await fetch(`${API_BASE}/api/membership/redeem`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: DEFAULT_ACTIVATION_CODE, userId: user.id }),
+        })
+        if (repair.ok) {
+          localStorage.setItem("tw_wallet_activated", "1")
+          const repairedUser = { ...user, isMember: true }
+          setUser(repairedUser)
+          localStorage.setItem("user", JSON.stringify(repairedUser))
+          response = await submitWithdrawal()
+          data = await parseJsonSafe(response)
+        }
+      }
 
       if (!response.ok) {
         const apiMsg = getApiErrorMessage(data, "Error processing withdrawal")
