@@ -20,16 +20,24 @@ This project contains an expanded scaffold for the Terezo Wallet MVP: backend (E
 ### Frontend
 1. cd frontend
 2. npm install
+3. cp .env.example .env.local
 3. npm run dev
 
 Frontend expects backend at http://localhost:5000
 
-### Frontend
-1. cd frontend
-2. npm install
-3. npm run dev
+## Deploy Notes (Important)
 
-Frontend expects backend at http://localhost:5000
+If login/register works on PC but fails on phone after deploy, your frontend is likely still pointing to localhost.
+
+1. Deploy backend to a public host (Render, Railway, VPS, etc.)
+2. Set backend `CORS_ORIGINS` in `backend/.env`:
+   - Example: `CORS_ORIGINS="https://your-app.netlify.app,https://yourdomain.com"`
+3. In Netlify (or your frontend host), set:
+   - `NEXT_PUBLIC_API_BASE=https://your-backend-domain.com`
+4. Redeploy frontend after changing environment variables.
+
+You can test backend from phone/browser with:
+- `https://your-backend-domain.com/health`
 
 ## What was added
 - Prisma schema with Funds, Transactions, TaskSubmissions, MembershipCodes

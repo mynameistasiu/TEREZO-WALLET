@@ -4,7 +4,23 @@ const cors = require('cors')
 const app = express()
 const port = process.env.PORT || 5000
 
-app.use(cors())
+const localOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000']
+const configuredOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+const allowedOrigins = [...new Set([...localOrigins, ...configuredOrigins])]
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser requests and mobile webviews without explicit origin.
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      return callback(new Error(`CORS blocked for origin: ${origin}`))
+    },
+  })
+)
 app.use(express.json())
 
 // API Routes
@@ -19,5 +35,6 @@ app.use('/api/transactions', require('./routes/transactions'))
 
 // Health check
 app.get('/', (req, res) => res.json({ status: 'ok', app: 'Terezo Wallet Backend' }))
+app.get('/health', (req, res) => res.json({ status: 'ok' }))
 
 app.listen(port, () => console.log(`Server running on http://localhost:${port}`))

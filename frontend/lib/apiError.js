@@ -19,7 +19,8 @@ export function getApiErrorMessage(data, fallback = "Request failed") {
 export function getNetworkErrorMessage(error, apiBase) {
   const raw = (error && error.message) || ""
   if (raw.toLowerCase().includes("failed to fetch")) {
-    return `Cannot connect to server. Start backend API at ${apiBase}.`
+    if (apiBase) return `Cannot connect to server. Check API endpoint: ${apiBase}.`
+    return "Cannot connect to server. Backend API URL is not configured."
   }
   return "Network error. Check your connection and try again."
 }
