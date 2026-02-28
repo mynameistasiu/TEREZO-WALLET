@@ -10,9 +10,17 @@ import { getApiErrorMessage, getNetworkErrorMessage, parseJsonSafe } from "../..
 const formatCurrency = (value = 0) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(value)
 
+const formatNairaInput = (value = "") => {
+  const digits = String(value).replace(/\D/g, "")
+  if (!digits) return ""
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+}
+
+const parseNairaInput = (value = "") => Number(String(value).replace(/,/g, "")) || 0
+
 export default function WithdrawPage() {
   const [user, setUser] = useState({ isMember: false, balance: 0, id: null })
-  const [formData, setFormData] = useState({ bankName: "", accountName: "", accountNumber: "", amount: "", reason: "" })
+  const [formData, setFormData] = useState({ bankName: "", accountName: "", accountNumber: "", amount: "" })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: "", text: "" })
 
@@ -32,7 +40,9 @@ export default function WithdrawPage() {
       return
     }
 
-    if (Number(formData.amount) > Number(user.balance)) {
+    const amountValue = parseNairaInput(formData.amount)
+
+    if (amountValue > Number(user.balance)) {
       setMessage({ type: "error", text: "Insufficient balance." })
       setLoading(false)
       return
@@ -42,7 +52,7 @@ export default function WithdrawPage() {
       const response = await fetch(`${API_BASE}/api/withdraw`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, ...formData, amount: Number(formData.amount) }),
+        body: JSON.stringify({ userId: user.id, ...formData, amount: amountValue }),
       })
       const data = await parseJsonSafe(response)
 
@@ -52,7 +62,7 @@ export default function WithdrawPage() {
       }
 
       setMessage({ type: "success", text: "Withdrawal request submitted. Processing window: 24-72 hours." })
-      setFormData({ bankName: "", accountName: "", accountNumber: "", amount: "", reason: "" })
+      setFormData({ bankName: "", accountName: "", accountNumber: "", amount: "" })
     } catch (error) {
       setMessage({ type: "error", text: getNetworkErrorMessage(error, API_BASE) })
     } finally {
@@ -93,13 +103,37 @@ export default function WithdrawPage() {
                 <label className={styles.label}>Bank Name</label>
                 <select name="bankName" className={styles.input} value={formData.bankName} onChange={(e) => setFormData({ ...formData, bankName: e.target.value })} required>
                   <option value="">Select Bank</option>
-                  <option value="GTBank">Guaranty Trust Bank</option>
-                  <option value="Access">Access Bank</option>
-                  <option value="FirstBank">First Bank</option>
-                  <option value="UBA">United Bank for Africa</option>
-                  <option value="Zenith">Zenith Bank</option>
-                  <option value="Opay">Opay Bank</option>
-                  <option value="Other">Other</option>
+                  <option value="Access Bank">Access Bank</option>
+                  <option value="Citibank Nigeria">Citibank Nigeria</option>
+                  <option value="Ecobank Nigeria">Ecobank Nigeria</option>
+                  <option value="Fidelity Bank">Fidelity Bank</option>
+                  <option value="First Bank of Nigeria">First Bank of Nigeria</option>
+                  <option value="First City Monument Bank">First City Monument Bank (FCMB)</option>
+                  <option value="Globus Bank">Globus Bank</option>
+                  <option value="Guaranty Trust Bank">Guaranty Trust Bank (GTBank)</option>
+                  <option value="Heritage Bank">Heritage Bank</option>
+                  <option value="Keystone Bank">Keystone Bank</option>
+                  <option value="Lotus Bank">Lotus Bank</option>
+                  <option value="Jaiz Bank">Jaiz Bank</option>
+                  <option value="Parallex Bank">Parallex Bank</option>
+                  <option value="Polaris Bank">Polaris Bank</option>
+                  <option value="Providus Bank">Providus Bank</option>
+                  <option value="Stanbic IBTC Bank">Stanbic IBTC Bank</option>
+                  <option value="Standard Chartered Bank">Standard Chartered Bank</option>
+                  <option value="Sterling Bank">Sterling Bank</option>
+                  <option value="SunTrust Bank">SunTrust Bank</option>
+                  <option value="TAJ Bank">TAJ Bank</option>
+                  <option value="Titan Trust Bank">Titan Trust Bank</option>
+                  <option value="Union Bank">Union Bank</option>
+                  <option value="United Bank for Africa">United Bank for Africa (UBA)</option>
+                  <option value="Unity Bank">Unity Bank</option>
+                  <option value="Wema Bank">Wema Bank</option>
+                  <option value="Zenith Bank">Zenith Bank</option>
+                  <option value="Opay">Opay</option>
+                  <option value="Moniepoint MFB">Moniepoint MFB</option>
+                  <option value="Kuda MFB">Kuda MFB</option>
+                  <option value="PalmPay">PalmPay</option>
+                  <option value="VFD MFB">VFD MFB</option>
                 </select>
               </div>
 
@@ -115,12 +149,19 @@ export default function WithdrawPage() {
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Amount (NGN)</label>
-                <input type="number" name="amount" className={styles.input} value={formData.amount} min="1000" max={user.balance} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Reason (Optional)</label>
-                <textarea name="reason" className={styles.textarea} rows="3" value={formData.reason} onChange={(e) => setFormData({ ...formData, reason: e.target.value })} />
+                <input
+                  type="text"
+                  name="amount"
+                  className={styles.input}
+                  inputMode="numeric"
+                  placeholder="e.g. 25,000"
+                  value={formData.amount}
+                  onChange={(e) => {
+                    const rawDigits = e.target.value.replace(/\D/g, "")
+                    setFormData({ ...formData, amount: formatNairaInput(rawDigits) })
+                  }}
+                  required
+                />
               </div>
 
               <button type="submit" className={styles.btnSubmit} disabled={loading}>{loading ? "Processing..." : "Request Withdrawal"}</button>
