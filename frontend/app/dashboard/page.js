@@ -47,6 +47,8 @@ export default function Dashboard() {
     }
 
     const parsed = JSON.parse(stored)
+    const activatedFlag = localStorage.getItem("tw_wallet_activated") === "1"
+    if (activatedFlag && !parsed.isMember) parsed.isMember = true
     setUser((prev) => ({ ...prev, ...parsed }))
     if (!parsed.welcomeBonusClaimed) setShowWelcomePopup(true)
 
@@ -59,7 +61,7 @@ export default function Dashboard() {
             ...parsed,
             balance: Math.max(Number(parsed.balance || 0), Number(data.balance ?? 0)),
             pendingBalance: data.pendingBalance ?? parsed.pendingBalance,
-            isMember: Boolean(data.isMember ?? parsed.isMember),
+            isMember: Boolean(data.isMember || parsed.isMember || activatedFlag),
           }
           setUser((prev) => ({ ...prev, ...nextUser }))
           localStorage.setItem("user", JSON.stringify(nextUser))

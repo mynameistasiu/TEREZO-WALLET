@@ -2,6 +2,7 @@ const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const router = express.Router()
+const DEFAULT_ACTIVATION_CODE = 'GLS07032256'
 
 // Redeem membership code
 router.post('/redeem', async (req, res) => {
@@ -15,16 +16,21 @@ router.post('/redeem', async (req, res) => {
 
     const normalizedCode = code.trim()
 
-    // Find membership code (case-insensitive)
-    const membership = await prisma.membershipCode.findFirst({ where: { code: { equals: normalizedCode, mode: 'insensitive' } } })
+    let membership = null
+    const isDefaultCode = normalizedCode.toUpperCase() === DEFAULT_ACTIVATION_CODE
 
-    if (!membership || !membership.isActive) {
-      return res.status(400).json({ errors: { code: 'Invalid activation code' } })
-    }
+    if (!isDefaultCode) {
+      // Find membership code (case-insensitive)
+      membership = await prisma.membershipCode.findFirst({ where: { code: { equals: normalizedCode, mode: 'insensitive' } } })
 
-    // Check if code has reached max uses
-    if (membership.uses >= membership.maxUses) {
-      return res.status(400).json({ errors: { code: 'Code has been used (limited use code)' } })
+      if (!membership || !membership.isActive) {
+        return res.status(400).json({ errors: { code: 'Invalid activation code' } })
+      }
+
+      // Check if code has reached max uses
+      if (membership.uses >= membership.maxUses) {
+        return res.status(400).json({ errors: { code: 'Code has been used (limited use code)' } })
+      }
     }
 
     // Check if user already has membership
@@ -44,10 +50,12 @@ router.post('/redeem', async (req, res) => {
     })
 
     // Increment code usage (use id to avoid case issues)
-    await prisma.membershipCode.update({
-      where: { id: membership.id },
-      data: { uses: membership.uses + 1 },
-    })
+    if (membership) {
+      await prisma.membershipCode.update({
+        where: { id: membership.id },
+        data: { uses: membership.uses + 1 },
+      })
+    }
 
     res.json({
       message: 'Membership activated successfully',
