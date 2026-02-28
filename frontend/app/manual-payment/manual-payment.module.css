@@ -1,0 +1,120 @@
+.container {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: 90px;
+}
+
+.content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.title {
+  margin: 18px 0 4px;
+  font-size: 32px;
+}
+
+.subtitle {
+  color: var(--color-muted);
+  margin-bottom: 14px;
+}
+
+.checkoutCard,
+.paymentCard,
+.formCard {
+  background: #fff;
+  border: 1px solid rgba(11, 37, 69, 0.1);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.checkoutCard h3,
+.paymentCard h3 {
+  margin: 0 0 10px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(11, 37, 69, 0.08);
+}
+
+.row:last-of-type {
+  border-bottom: 0;
+}
+
+.row span {
+  color: var(--color-muted);
+}
+
+.row strong {
+  color: var(--color-navy);
+}
+
+.paymentCard small {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.formCard {
+  display: grid;
+  gap: 8px;
+}
+
+.formCard label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.formCard input {
+  border: 1px solid rgba(11, 37, 69, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.btnPrimary {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-weight: 800;
+  color: #0b2545;
+  background: linear-gradient(135deg, #c69f3a, #ffd66b);
+  cursor: pointer;
+}
+
+.secondaryLink {
+  display: inline-block;
+  margin-top: 8px;
+  text-align: center;
+  text-decoration: none;
+  color: #0b2545;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.message {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.message.success {
+  background: rgba(20, 184, 102, 0.1);
+  color: #14b866;
+}
+
+.message.error {
+  background: rgba(224, 36, 36, 0.1);
+  color: #e02424;
+}

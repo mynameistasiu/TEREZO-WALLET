@@ -1,0 +1,129 @@
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--color-gold);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .card {
+    flex-direction: column;
+  }
+}
+
+.content {
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-navy);
+  margin: 0;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.description {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin: var(--space-2) 0;
+}
+
+.rewardBadge {
+  display: inline-block;
+  background: linear-gradient(135deg, #C69F3A, #FFD66B);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: var(--space-3) 0;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--color-green);
+  margin-top: var(--space-2);
+  font-style: italic;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 150px;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #C69F3A, #FFD66B);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.btnPrimary:hover {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-gold-glow);
+}
+
+.btnSecondary {
+  background: rgba(232, 210, 161, 0.2);
+  color: #A6782A;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: not-allowed;
+  flex: 1;
+}
+
+.btnDanger {
+  background: rgba(224, 36, 36, 0.1);
+  color: #E02424;
+  border: 1px solid #E02424;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.approvedBadge {
+  display: inline-block;
+  background: #14B866;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+}

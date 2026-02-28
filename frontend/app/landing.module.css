@@ -1,0 +1,258 @@
+.container {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(198, 159, 58, 0.18), transparent 36%),
+    radial-gradient(circle at 88% 18%, rgba(11, 37, 69, 0.14), transparent 28%),
+    linear-gradient(180deg, #f3f6fb 0%, #eef2f8 100%);
+  color: var(--color-navy);
+  overflow-x: hidden;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(11, 37, 69, 0.08);
+}
+
+.brandWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerText {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: "Poppins", sans-serif;
+}
+
+.headerSubtext {
+  font-size: 12px;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navLink {
+  text-decoration: none;
+  color: var(--color-navy);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.navButton {
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #c69f3a, #ffd66b);
+  color: #0b2545;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.hero {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 64px 24px 24px;
+  text-align: center;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(11, 37, 69, 0.08);
+  color: #0b2545;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.heroTitle {
+  font-size: clamp(34px, 7vw, 60px);
+  font-weight: 800;
+  margin: 16px auto;
+  max-width: 860px;
+  font-family: "Poppins", sans-serif;
+  line-height: 1.05;
+}
+
+.heroDescription {
+  max-width: 760px;
+  margin: 0 auto 22px;
+  color: var(--color-muted);
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+.ctaSection {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary,
+.btnSecondary {
+  text-decoration: none;
+  min-width: 210px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #c69f3a, #ffd66b);
+  color: #0b2545;
+  box-shadow: 0 10px 30px rgba(198, 159, 58, 0.22);
+}
+
+.btnSecondary {
+  border: 1px solid rgba(11, 37, 69, 0.18);
+  color: #0b2545;
+  background: #fff;
+}
+
+.statsRow {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(11, 37, 69, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.statCard h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.statCard p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.howItWorks,
+.trust {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 36px 24px;
+}
+
+.sectionTitle {
+  text-align: center;
+  margin-bottom: 18px;
+  font-size: 30px;
+}
+
+.stepsGrid,
+.trustGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stepCard,
+.trustCard {
+  background: #fff;
+  border: 1px solid rgba(11, 37, 69, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 30px rgba(11, 37, 69, 0.04);
+}
+
+.stepNumber {
+  color: #c69f3a;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.stepCard h4,
+.trustCard h4 {
+  margin: 10px 0 8px;
+  font-size: 16px;
+}
+
+.stepCard p,
+.trustCard p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.legalLinks {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.legalLinks a {
+  color: #0b2545;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.divider {
+  color: var(--color-muted);
+}
+
+.footer {
+  padding: 30px 20px 48px;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 920px) {
+  .stepsGrid,
+  .trustGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 14px;
+  }
+
+  .headerActions {
+    display: none;
+  }
+
+  .hero {
+    padding-top: 40px;
+  }
+
+  .stepsGrid,
+  .trustGrid {
+    grid-template-columns: 1fr;
+  }
+}
