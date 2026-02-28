@@ -2,7 +2,17 @@ export async function parseJsonSafe(response) {
   try {
     return await response.json()
   } catch {
-    return null
+    try {
+      const text = await response.text()
+      if (!text) return null
+      try {
+        return JSON.parse(text)
+      } catch {
+        return { error: text }
+      }
+    } catch {
+      return null
+    }
   }
 }
 

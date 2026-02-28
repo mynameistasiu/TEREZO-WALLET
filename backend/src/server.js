@@ -10,12 +10,15 @@ const configuredOrigins = (process.env.CORS_ORIGINS || '')
   .map((o) => o.trim())
   .filter(Boolean)
 const allowedOrigins = [...new Set([...localOrigins, ...configuredOrigins])]
+const hasExplicitCorsOrigins = configuredOrigins.length > 0
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow non-browser requests and mobile webviews without explicit origin.
       if (!origin) return callback(null, true)
+      // If CORS_ORIGINS is not configured yet, do not block requests.
+      if (!hasExplicitCorsOrigins) return callback(null, true)
       if (allowedOrigins.includes(origin)) return callback(null, true)
       return callback(new Error(`CORS blocked for origin: ${origin}`))
     },

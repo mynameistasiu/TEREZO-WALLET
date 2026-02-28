@@ -36,12 +36,11 @@ router.post('/register', async (req, res) => {
     // Hash password
     const hashed = await bcrypt.hash(password, 10)
 
-    // Build user data
+    // Build user data (avoid schema-mismatch failures on older deployed DB schemas)
     const data = {
       email,
       password: hashed,
       fullName,
-      firstName: fullName.split(' ')[0],
       phone,
       balance: 0, // Will be set to 64000 when welcome bonus is claimed
       pendingBalance: 0,
