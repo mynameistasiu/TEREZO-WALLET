@@ -132,18 +132,60 @@
 }
 
 .btnSubmit {
+  position: relative;
+  overflow: hidden;
   width: 100%;
-  padding: 14px 20px;
-  background: linear-gradient(135deg, #c69f3a, #ffd66b);
-  color: #0b2545;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #0b2340 0%, #154a8f 45%, #19a8ff 100%);
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
-  font-weight: 700;
+  border-radius: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
   font-size: 15px;
+  box-shadow: 0 10px 24px rgba(21, 74, 143, 0.28);
+  transition: transform 0.18s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.btnSubmit::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -30%;
+  width: 40%;
+  height: 220%;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.05));
+  transform: rotate(18deg);
+  transition: left 0.45s ease;
+}
+
+.btnSubmit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(21, 74, 143, 0.34);
+  filter: saturate(1.1);
+}
+
+.btnSubmit:hover::before {
+  left: 105%;
+}
+
+.btnSubmit:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(21, 74, 143, 0.24);
+}
+
+.btnSubmit:focus-visible {
+  outline: 3px solid rgba(25, 168, 255, 0.35);
+  outline-offset: 2px;
 }
 
 .btnSubmit:disabled {
-  opacity: 0.6;
+  background: linear-gradient(135deg, #8da2bf 0%, #a6b5cc 100%);
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  cursor: not-allowed;
 }
 
 .overlay {
