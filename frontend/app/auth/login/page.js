@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { API_BASE } from "../../../config"
+import { API_BASE, IS_API_CONFIGURED } from "../../../config"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Logo from "../../../components/Logo"
@@ -23,6 +23,12 @@ export default function LoginPage() {
     e.preventDefault()
     setMessage({ type: "", text: "" })
     setLoading(true)
+
+    if (!IS_API_CONFIGURED) {
+      setMessage({ type: "error", text: "Backend not configured. Set NEXT_PUBLIC_API_BASE in deployment settings." })
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {

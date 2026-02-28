@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { API_BASE } from "../../../config"
+import { API_BASE, IS_API_CONFIGURED } from "../../../config"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Logo from "../../../components/Logo"
@@ -65,6 +65,11 @@ export default function RegisterPage() {
     e.preventDefault()
     setMessage({ type: "", text: "" })
     if (!validateForm()) return
+
+    if (!IS_API_CONFIGURED) {
+      setMessage({ type: "error", text: "Backend not configured. Set NEXT_PUBLIC_API_BASE in deployment settings." })
+      return
+    }
 
     setLoading(true)
     try {

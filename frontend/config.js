@@ -14,5 +14,6 @@ const inferredApiBase = (() => {
 })()
 
 export const API_BASE = envApiBase || inferredApiBase
+export const IS_API_CONFIGURED = Boolean(API_BASE)
 export const MEMBERSHIP_FEE = parseInt(process.env.NEXT_PUBLIC_MEMBERSHIP_FEE) || 10000
 export const WELCOME_BONUS = parseInt(process.env.NEXT_PUBLIC_WELCOME_BONUS) || 64000
