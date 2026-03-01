@@ -1,9 +1,10 @@
 "use client"
 import { useMemo, useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Header from "../../components/Header"
 import BottomNav from "../../components/BottomNav"
 import styles from "./tasks.module.css"
-import { updateUserById } from "../../lib/localData"
+import { getCurrentUser, updateUserById } from "../../lib/localData"
 
 const STORAGE_KEY = "tw_task_state"
 const TX_STORAGE_KEY = "tw_local_transactions"
@@ -50,10 +51,16 @@ const initialTaskState = {
 }
 
 export default function Tasks() {
+  const router = useRouter()
   const [taskState, setTaskState] = useState(initialTaskState)
   const [feedback, setFeedback] = useState({ type: "", text: "" })
 
   useEffect(() => {
+    const currentUser = getCurrentUser()
+    if (!currentUser) {
+      router.replace("/auth/login")
+      return
+    }
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       try {
@@ -62,7 +69,7 @@ export default function Tasks() {
         setTaskState(initialTaskState)
       }
     }
-  }, [])
+  }, [router])
 
   const persistTaskState = (next) => {
     setTaskState(next)

@@ -6,7 +6,7 @@ import WelcomePopup from "../../components/WelcomePopup"
 import Header from "../../components/Header"
 import BottomNav from "../../components/BottomNav"
 import styles from "./dashboard.module.css"
-import { addLocalTransaction, getLocalTransactions, updateUserById } from "../../lib/localData"
+import { addLocalTransaction, getCurrentUser, getLocalTransactions, updateUserById } from "../../lib/localData"
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount)
@@ -38,23 +38,32 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState([])
 
   useEffect(() => {
-    const stored = localStorage.getItem("user")
-    if (!stored) {
+    const parsed = getCurrentUser()
+    if (!parsed) {
       router.push("/auth/login")
       return
     }
 
-    const parsed = JSON.parse(stored)
     const activatedFlag = localStorage.getItem("tw_wallet_activated") === "1"
     if (activatedFlag && !parsed.isMember) parsed.isMember = true
     setUser((prev) => ({ ...prev, ...parsed }))
-    if (!parsed.welcomeBonusClaimed) setShowWelcomePopup(true)
+
+    const popupSeenKey = `tw_welcome_popup_seen_${parsed.id || "guest"}`
+    const hasSeenPopup = localStorage.getItem(popupSeenKey) === "1"
+    if (!parsed.welcomeBonusClaimed && !hasSeenPopup) {
+      setShowWelcomePopup(true)
+      localStorage.setItem(popupSeenKey, "1")
+    }
 
     setTransactions(getLocalTransactions())
   }, [router])
 
   const handleClaimBonus = async () => {
     setClaimError("")
+    if (user.welcomeBonusClaimed) {
+      setShowWelcomePopup(false)
+      return
+    }
     setClaiming(true)
     try {
       const updated = {
@@ -111,6 +120,7 @@ export default function Dashboard() {
       const nextUser = { ...user, balance: availableBalance }
       setUser(nextUser)
       localStorage.setItem("user", JSON.stringify(nextUser))
+      if (nextUser.id) updateUserById(nextUser.id, nextUser)
     }
   }, [availableBalance, user])
 
@@ -132,7 +142,7 @@ export default function Dashboard() {
 
         <section className={styles.topBar}>
           <div>
-            <h1 className={styles.pageTitle}>Wallet Control Center</h1>
+            <h1 className={styles.pageTitle}>Welcome, {user.firstName || "User"}</h1>
             <p className={styles.pageSub}>Track growth, complete milestones, and manage your wallet securely.</p>
           </div>
           <div className={styles.utilityActions}>
