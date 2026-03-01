@@ -4,10 +4,9 @@ import { useRouter } from "next/navigation"
 import Header from "../../components/Header"
 import BottomNav from "../../components/BottomNav"
 import styles from "./tasks.module.css"
-import { getCurrentUser, updateUserById } from "../../lib/localData"
+import { addLocalTransaction, getCurrentUser, updateUserById } from "../../lib/localData"
 
-const STORAGE_KEY = "tw_task_state"
-const TX_STORAGE_KEY = "tw_local_transactions"
+const taskStorageKey = (userId) => `tw_task_state_${userId || "guest"}`
 
 const TASKS = [
   {
@@ -54,14 +53,17 @@ export default function Tasks() {
   const router = useRouter()
   const [taskState, setTaskState] = useState(initialTaskState)
   const [feedback, setFeedback] = useState({ type: "", text: "" })
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    const user = getCurrentUser()
+    if (!user) {
       router.replace("/auth/login")
       return
     }
-    const stored = localStorage.getItem(STORAGE_KEY)
+    setCurrentUser(user)
+    const key = taskStorageKey(user.id)
+    const stored = localStorage.getItem(key)
     if (stored) {
       try {
         setTaskState({ ...initialTaskState, ...JSON.parse(stored) })
@@ -73,7 +75,8 @@ export default function Tasks() {
 
   const persistTaskState = (next) => {
     setTaskState(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    const key = taskStorageKey(currentUser?.id)
+    localStorage.setItem(key, JSON.stringify(next))
   }
 
   const creditTaskReward = (taskId, reward) => {
@@ -96,18 +99,9 @@ export default function Tasks() {
         rewardsClaimed: { ...paidMap, [taskId]: true },
       }
 
-      const existingTx = JSON.parse(localStorage.getItem(TX_STORAGE_KEY) || "[]")
-      const tx = {
-        id: `local-task-${taskId}-${Date.now()}`,
-        type: "TASK_REWARD",
-        amount: reward,
-        createdAt: new Date().toISOString(),
-        meta: taskId,
-      }
-
       localStorage.setItem("user", JSON.stringify(updatedUser))
       updateUserById(updatedUser.id, updatedUser)
-      localStorage.setItem(TX_STORAGE_KEY, JSON.stringify([tx, ...existingTx].slice(0, 40)))
+      addLocalTransaction({ type: "TASK_REWARD", amount: reward, meta: taskId }, updatedUser.id)
       persistTaskState(nextState)
       setFeedback({ type: "success", text: `${formatCurrency(reward)} added to your Available Balance.` })
     } catch {
@@ -138,6 +132,7 @@ export default function Tasks() {
       return
     }
     markTaskComplete("final_claim")
+    setTimeout(() => router.push("/dashboard"), 600)
   }
 
   const completedCount = useMemo(() => TASKS.filter((task) => taskState[task.id]).length, [taskState])

@@ -6,14 +6,15 @@ import WelcomePopup from "../../components/WelcomePopup"
 import Header from "../../components/Header"
 import BottomNav from "../../components/BottomNav"
 import styles from "./dashboard.module.css"
-import { addLocalTransaction, getCurrentUser, getLocalTransactions, updateUserById } from "../../lib/localData"
+import { addLocalTransaction, clearCurrentSession, getCurrentUser, getLocalTransactions, updateUserById } from "../../lib/localData"
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount)
 
-const readTaskState = () => {
+const readTaskState = (userId) => {
+  const key = `tw_task_state_${userId || "guest"}`
   try {
-    const raw = localStorage.getItem("tw_task_state")
+    const raw = localStorage.getItem(key)
     if (!raw) return {}
     return JSON.parse(raw)
   } catch {
@@ -55,7 +56,7 @@ export default function Dashboard() {
       localStorage.setItem(popupSeenKey, "1")
     }
 
-    setTransactions(getLocalTransactions())
+    setTransactions(getLocalTransactions(parsed.id))
   }, [router])
 
   const handleClaimBonus = async () => {
@@ -74,7 +75,7 @@ export default function Dashboard() {
       setUser(updated)
       localStorage.setItem("user", JSON.stringify(updated))
       if (updated.id) updateUserById(updated.id, updated)
-      setTransactions(addLocalTransaction({ type: "WELCOME_BONUS", amount: 64000 }))
+      setTransactions(addLocalTransaction({ type: "WELCOME_BONUS", amount: 64000 }, updated.id))
       setShowWelcomePopup(false)
     } catch {
       setClaimError("Failed to claim bonus")
@@ -84,10 +85,10 @@ export default function Dashboard() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
+    const userId = user?.id
+    clearCurrentSession()
     localStorage.removeItem("pendingUser")
-    localStorage.removeItem("tw_task_state")
+    if (userId) localStorage.removeItem(`tw_task_state_${userId}`)
     sessionStorage.clear()
     router.replace("/auth/login")
     router.refresh()
@@ -96,7 +97,10 @@ export default function Dashboard() {
     }, 60)
   }
 
-  const taskState = useMemo(() => (typeof window === "undefined" ? {} : readTaskState()), [user.balance, user.tasksCompleted, user.isMember])
+  const taskState = useMemo(
+    () => (typeof window === "undefined" ? {} : readTaskState(user.id)),
+    [user.id, user.balance, user.tasksCompleted, user.isMember]
+  )
   const firstThreeDone = Boolean(taskState.whatsapp_join && taskState.share_groups && taskState.telegram_follow)
   const finalDone = Boolean(taskState.final_claim)
   const taskEarned = (taskState.whatsapp_join ? 15000 : 0) + (taskState.share_groups ? 15000 : 0) + (taskState.telegram_follow ? 15000 : 0) + (taskState.final_claim ? 30000 : 0)

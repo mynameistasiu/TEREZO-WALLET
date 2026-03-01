@@ -86,7 +86,7 @@ export default function WithdrawPage() {
         type: "WITHDRAWAL_REQUEST",
         amount: -amountValue,
         meta: `${formData.bankName} ${formData.accountNumber}`,
-      })
+      }, updatedUser.id)
 
       setSuccessText(`Your withdrawal of ${formatCurrency(amountValue)} was submitted successfully.`)
       setShowSuccessPopup(true)

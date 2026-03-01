@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import Header from "../../components/Header"
 import BottomNav from "../../components/BottomNav"
 import styles from "./profile.module.css"
+import { clearCurrentSession, getCurrentUser } from "../../lib/localData"
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(amount)
@@ -14,17 +15,12 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem("user")
-    if (!stored) {
+    const parsed = getCurrentUser()
+    if (!parsed) {
       router.replace("/auth/login")
       return
     }
-    try {
-      const parsed = JSON.parse(stored)
-      setUser(parsed)
-    } catch {
-      router.replace("/auth/login")
-    }
+    setUser(parsed)
   }, [router])
 
   const initials = useMemo(() => {
@@ -52,10 +48,10 @@ export default function ProfilePage() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
+    const userId = user?.id
+    clearCurrentSession()
     localStorage.removeItem("pendingUser")
-    localStorage.removeItem("tw_task_state")
+    if (userId) localStorage.removeItem(`tw_task_state_${userId}`)
     sessionStorage.clear()
     router.replace("/auth/login")
     setTimeout(() => {
