@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0B2545" />
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#twGlow)" opacity="0.15" />
+  <path d="M13 18H35" stroke="#FFD66B" stroke-width="5" stroke-linecap="round" />
+  <path d="M24 18V44" stroke="#FFD66B" stroke-width="5" stroke-linecap="round" />
+  <path d="M34 21L39 44L46 29L53 44L58 21" stroke="#C69F3A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+  <defs>
+    <linearGradient id="twGlow" x1="2" y1="2" x2="62" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD66B" />
+      <stop offset="1" stop-color="#C69F3A" />
+    </linearGradient>
+  </defs>
+</svg>

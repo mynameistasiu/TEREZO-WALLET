@@ -1,6 +1,6 @@
 # Terezo Wallet - Expanded Professional MVP scaffold
 
-This project contains an expanded scaffold for the Terezo Wallet MVP: backend (Express + Prisma + SQLite) and frontend (Next.js app router).
+This project contains an expanded scaffold for the Terezo Wallet MVP: backend (Express + Prisma + PostgreSQL-ready) and frontend (Next.js app router).
 
 ## Quickstart
 
@@ -9,8 +9,8 @@ This project contains an expanded scaffold for the Terezo Wallet MVP: backend (E
 2. npm install
 3. cp .env.example .env
 4. npx prisma generate
-5. npx prisma migrate dev --name init
-   - ensures new tables (User.balance, Withdrawal, ManualPayment, etc.) are created
+5. npm run db:push
+   - creates/updates tables in your configured PostgreSQL database
 6. npm run seed
    - seeds Funds, Tasks (4 demo tasks), MembershipCodes including default code `GLS07032256`
    - creates an admin account `admin@example.com` / `admin123`
@@ -25,21 +25,42 @@ This project contains an expanded scaffold for the Terezo Wallet MVP: backend (E
 
 Frontend expects backend at http://localhost:5000
 
-## Deploy Notes (Automatic Frontend -> Backend Proxy)
+## Vercel Deploy Notes (Frontend + Backend + Admin Users)
 
-This app is configured so deployed frontend can call `/api/*` on the same domain and Netlify forwards it to your backend.
+### 1. Create database
+1. In Vercel, create a Postgres database.
+2. Copy `DATABASE_URL`.
 
-1. Deploy backend to a public host (Render, Railway, VPS, etc.)
-2. In backend `.env`, set:
-   - `CORS_ORIGINS="https://your-app.netlify.app,https://yourdomain.com"`
-3. In Netlify environment variables, set:
-   - `BACKEND_API_BASE=https://your-backend-domain.com`
-4. Redeploy Netlify site.
+### 2. Deploy backend (`/backend` project)
+1. Create a Vercel project from the `backend` directory.
+2. Set environment variables:
+   - `DATABASE_URL=<your-vercel-postgres-url>`
+   - `JWT_SECRET=<strong-random-secret>`
+   - `CORS_ORIGINS=https://your-frontend-domain.vercel.app`
+3. Deploy.
 
-No user-side manual API setup is required when this is configured.
+Backend entry for Vercel serverless is `backend/api/index.js` and routes are configured in `backend/vercel.json`.
 
-You can test backend directly:
-- `https://your-backend-domain.com/health`
+### 3. Prepare database schema + seed data
+Run these from `backend` against the production database URL:
+1. `npm run prisma:generate`
+2. `npm run db:push`
+3. `npm run seed`
+
+This creates the admin user:
+- `admin@example.com`
+- `admin123`
+
+### 4. Deploy frontend (`/frontend` project)
+1. Create a Vercel project from the `frontend` directory.
+2. Set:
+   - `NEXT_PUBLIC_API_BASE=https://your-backend-domain.vercel.app`
+3. Deploy.
+
+### 5. Test admin
+1. Login at frontend with admin credentials.
+2. Open `/admin`.
+3. Admin dashboard fetches user details from `/api/admin/users` (email, phone, admin/member flags, balance, pending balance, kyc status, joined date).
 
 ## What was added
 - Prisma schema with Funds, Transactions, TaskSubmissions, MembershipCodes
