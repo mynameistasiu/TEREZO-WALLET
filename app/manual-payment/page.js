@@ -18,7 +18,7 @@ export default function ManualPaymentPage() {
     const proofText = encodeURIComponent(
       `Hello Admin, I have made activation payment.\nAmount: ${formatCurrency(PAYMENT.amount)}\nBank: ${PAYMENT.bank}\nAccount Number: ${PAYMENT.accountNumber}\nPlease verify and send my activation code.`
     )
-    window.location.href = `https://wa.me/2348039859072?text=${proofText}`
+    window.location.href = `https://wa.me/‪2347076196687‬text=${proofText}`
   }
 
   return (
