@@ -4,10 +4,10 @@ import BottomNav from "../../components/BottomNav"
 import styles from "./manual-payment.module.css"
 
 const PAYMENT = {
-  accountNumber: "7382948273",
-  accountName: "Abubakar Abdullahi",
-  bank: "Opay Bank",
-  amount: 10000,
+  accountNumber: "8136361997",
+  accountName: "Sadiq Mamud",
+  bank: "Moniepoint MFB",
+  amount: 6000,
 }
 
 const formatCurrency = (value) =>
