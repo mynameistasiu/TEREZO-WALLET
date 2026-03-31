@@ -4,8 +4,8 @@ import BottomNav from "../../components/BottomNav"
 import styles from "./manual-payment.module.css"
 
 const PAYMENT = {
-  accountNumber: "6511699109",
-  accountName: "Abdulrahim Usman",
+  accountNumber: "5073816968",
+  accountName: "Sadiq Mamuda",
   bank: "Moniepoint MFB",
   amount: 6000,
 }
