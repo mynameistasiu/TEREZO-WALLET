@@ -7,7 +7,7 @@ const PAYMENT = {
   accountNumber: "5073816968",
   accountName: "Sadiq Mamuda",
   bank: "Moniepoint MFB",
-  amount: 6000,
+  amount: 7500,
 }
 
 const formatCurrency = (value) =>
